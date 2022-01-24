@@ -1,0 +1,181 @@
+
+
+	- In app.module.ts:
+	
+		const appRoutes: Routes = [
+		  { path: '', component: HomeComponent },
+		  { path: 'users', component: UsersComponent },
+		  { path: 'servers', component: ServersComponent }
+		];
+		
+		
+		
+		imports: [
+			BrowserModule,
+			FormsModule,
+			RouterModule.forRoot(appRoutes)
+		 ],
+		 
+		- In app.component.html
+		
+			<router-outlet></router-outlet>
+		  
+		  
+		  
+------------------------------	  
+	- Styling Active Router Links:
+	
+		- <li role="presentation"
+            routerLinkActive="active"
+            [routerLinkActiveOptions]="{exact: true}">
+          <a routerLink="/">Home</a>
+		  
+------------------------------		
+	- Navigating Programmatically:
+	
+		-   onLoadServers() {
+			// Do stuff and then re-route
+			this.router.navigate(['/servers']); // Absolute path
+		  }
+		  
+		  
+------------------------------			  
+	- Passing Parameters to Routes:
+	
+		- const appRoutes: Routes = [
+		  { path: 'users/:id/:name', component: UsersComponent },
+		  { path: 'servers', component: ServersComponent }
+		];
+		
+		// http://localhost:4200/users/1/Mehdi
+		
+	
+------------------------------	
+	- Fetching Route Parameters:
+	
+		- The ActivatedRoute object we inject will  give us access to the id passed in the URL => Selected User.
+		
+		ngOnInit() {
+			this.user = {
+				id: this.route.snapshot.params['id'],
+				name: this.route.snapshot.params['name'],
+				};
+		}
+		
+		
+		
+------------------------------			
+	- Fetching Route Parameters Reactively:
+	
+		- <a [routerLink]="['/users', 10, 'Anna']">Load Anna (10)</a>
+		
+		- On ts file, you need a subscribe on the route.params
+		
+			 this.route.params
+					  .subscribe(
+						(params: Params) => {
+						  this.user.id = params['id'];
+						  this.user.name = params['name'];
+						}
+					  );
+------------------------------						  
+	- An Important Note about Route Observables:
+	
+		- Best practive is to unsubscribe() at   ngOnDestroy()
+		
+------------------------------			
+	- Passing Query Parameters and Fragments:
+	
+			- 
+			<a
+			[routerLink]="['/servers', 5, 'edit']"
+			[queryParams]="{allowEdit: '1'}"
+			fragment="loading"
+			class="list-group-item"
+			*ngFor="let server of servers">
+			{{ server.name }}
+		  </a>
+		  
+		  --> This gives this URL : http://localhost:4200/servers/5/edit?allowEdit=1#loading
+		  
+		  
+		  
+			- You can this programmatically too:
+		  
+			  onLoadServers(id: number) {
+					// Do stuff and then re-route
+					this.router.navigate(['/servers', id, 'edit'], {queryParams: {allowEdit: '1'}, fragment: 'loading'});
+				 }
+				  
+				  // http://localhost:4200/servers/1/edit?allowEdit=1#loading
+		
+------------------------------		
+	- Retrieving Query Parameters and Fragments:
+	 
+		- Only on component init:
+		
+			ngOnInit() {
+				console.log(this.route.snapshot.queryParams);
+				console.log(this.route.snapshot.fragment);
+			}
+			
+		- More reactive way:
+		
+			-   ngOnInit() {
+				console.log(this.route.snapshot.queryParams);
+				console.log(this.route.snapshot.fragment);
+				this.route.queryParams.subscribe();
+				this.route.fragment.subscribe();
+			
+			}
+			
+----------------------------
+	-   Redirecting and Wildcard Routes:
+	
+		- Make sure '**' is last
+		
+		
+			const appRoutes: Routes = [
+			  { path: '', component: HomeComponent},
+			 
+			  { path: 'not-found', component: PageNotFoundComponent },
+			  { path: '**', redirectTo: '/not-found' },
+
+			];
+			
+			
+			
+			- Important: Redirection Path Matching:
+			
+				- In our example, we didn't encounter any issues when we tried to redirect the user. But that's not always the case when adding redirections.
+
+				- By default, Angular matches paths by prefix. That means, that the following route will match both /recipes  and just / 
+
+					- { path: '', redirectTo: '/somewhere-else' } 
+					
+					
+				- Actually, Angular will give you an error here, because that's a common gotcha: This route will now ALWAYS redirect you! Why?
+
+				- Since the default matching strategy is "prefix" , Angular checks if the path you entered in the URL does start with the path specified in the route. 
+				Of course every path starts with ''  (Important: That's no whitespace, it's simply "nothing").
+				
+				- To fix this behavior, you need to change the matching strategy to: "full"
+				
+					- { path: '', redirectTo: '/somewhere-else', pathMatch: 'full' } 
+					
+				 - Now, you only get redirected, if the full path is ''  (so only if you got NO other content in your path in this example).
+				 
+				 
+				 
+-------------------------
+	- Outsourcing the Route Configuration:
+	
+		- OK
+
+
+----------------------
+	- Protecting Routes with canActivate
+	
+		- Excecute a code before a Route is loaded.
+		- Can run synchronously(client side) or asynchronously(server side)
+		
